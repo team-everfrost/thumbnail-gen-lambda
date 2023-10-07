@@ -37,8 +37,10 @@ const saveS3 = async (key, body) => {
 };
 
 const createThumbnail = async (byteArray) => {
+  const originalSize = (await sharp(byteArray).metadata()).width;
+
   const thumbnail = await sharp(byteArray)
-    .resize(1440)
+    .resize(1440 > originalSize ? originalSize : 1440)
     .toFormat('webp')
     .toBuffer();
 

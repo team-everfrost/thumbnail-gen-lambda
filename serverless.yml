@@ -7,7 +7,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ap-northeast-2
   timeout: 30
-  memorySize: 512
+  memorySize: 1024
   environment:
     NODE_ENV: 'production'
   iamRoleStatements:
