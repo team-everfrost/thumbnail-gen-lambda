@@ -37,7 +37,7 @@ const saveS3 = async (key, body) => {
 };
 
 const createThumbnail = async (byteArray) => {
-  const thumbnail = await sharp(Buffer.from(byteArray))
+  const thumbnail = await sharp(byteArray)
     .resize(1440)
     .toFormat('webp')
     .toBuffer();
@@ -61,7 +61,7 @@ export const handler = async (event) => {
         continue;
       }
 
-      const thumbnail = await createThumbnail(key);
+      const thumbnail = await createThumbnail(byteArray);
 
       await saveS3(key, thumbnail);
     }
