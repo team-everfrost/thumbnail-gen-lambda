@@ -29,15 +29,15 @@ const loadS3 = async (key) => {
 const saveS3 = async (key, body) => {
   const command = new PutObjectCommand({
     Bucket: DEST_BUCKET,
-    Key: key,
+    Key: key + '.webp',
     Body: body,
     ContentType: 'image/webp',
   });
   await s3Client.send(command);
 };
 
-const createThumbnail = async (buffer) => {
-  const thumbnail = await sharp(buffer)
+const createThumbnail = async (byteArray) => {
+  const thumbnail = await sharp(Buffer.from(byteArray))
     .resize(1440)
     .toFormat('webp')
     .toBuffer();
@@ -51,11 +51,11 @@ export const handler = async (event) => {
     const eventType = record.eventName;
 
     if (eventType === 'ObjectCreated:Put') {
-      const buffer = await loadS3(key);
+      const byteArray = await loadS3(key);
 
       // check if the file is an image
       const fileType = await import('file-type');
-      const fileTypeResult = await fileType.fileTypeFromBuffer(buffer);
+      const fileTypeResult = await fileType.fileTypeFromBuffer(byteArray);
 
       if (!fileTypeResult || fileTypeResult.mime.split('/')[0] !== 'image') {
         continue;
