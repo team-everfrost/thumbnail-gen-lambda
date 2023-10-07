@@ -34,7 +34,6 @@ functions:
           event: s3:ObjectRemoved:*
 
 plugins:
-  - serverless-dotenv-plugin
   - serverless-plugin-typescript
   - serverless-prune-plugin
 
