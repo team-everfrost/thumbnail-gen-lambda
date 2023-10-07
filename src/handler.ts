@@ -36,10 +36,13 @@ const saveS3 = async (key, body) => {
   await s3Client.send(command);
 };
 
-const createThumbnail = async (key) => {
-  const body = await loadS3(key);
-  const thumbnail = await sharp(body).resize(1440).toFormat('webp').toBuffer();
-  await saveS3(key, thumbnail);
+const createThumbnail = async (buffer) => {
+  const thumbnail = await sharp(buffer)
+    .resize(1440)
+    .toFormat('webp')
+    .toBuffer();
+
+  return thumbnail;
 };
 
 export const handler = async (event) => {
@@ -48,7 +51,19 @@ export const handler = async (event) => {
     const eventType = record.eventName;
 
     if (eventType === 'ObjectCreated:Put') {
-      await createThumbnail(key);
+      const buffer = await loadS3(key);
+
+      // check if the file is an image
+      const fileType = await import('file-type');
+      const fileTypeResult = await fileType.fileTypeFromBuffer(buffer);
+
+      if (!fileTypeResult || fileTypeResult.mime.split('/')[0] !== 'image') {
+        continue;
+      }
+
+      const thumbnail = await createThumbnail(key);
+
+      await saveS3(key, thumbnail);
     }
 
     if (eventType === 'ObjectRemoved:Delete') {

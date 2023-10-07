@@ -1,8 +1,6 @@
 service: remak-thumbnailgen
 frameworkVersion: '3'
 
-useDotenv: true
-
 provider:
   name: aws
   runtime: nodejs18.x
@@ -29,9 +27,13 @@ functions:
       - s3:
           bucket: remak-documents
           event: s3:ObjectCreated:*
+          existing: true
+          forceDeploy: true
       - s3:
           bucket: remak-documents
           event: s3:ObjectRemoved:*
+          existing: true
+          forceDeploy: true
 
 plugins:
   - serverless-plugin-typescript
