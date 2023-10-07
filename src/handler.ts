@@ -1,4 +1,9 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 
 const SOURCE_BUCKET = 'remak-documents';
@@ -11,7 +16,14 @@ const loadS3 = async (key) => {
     Key: key,
   });
   const response = await s3Client.send(command);
-  return response.Body;
+
+  const byteArray = await response.Body?.transformToByteArray();
+
+  if (!byteArray) {
+    throw new Error('Failed to read file');
+  }
+
+  return byteArray;
 };
 
 const saveS3 = async (key, body) => {
@@ -22,13 +34,13 @@ const saveS3 = async (key, body) => {
     ContentType: 'image/webp',
   });
   await s3Client.send(command);
-}
+};
 
 const createThumbnail = async (key) => {
   const body = await loadS3(key);
   const thumbnail = await sharp(body).resize(1440).toFormat('webp').toBuffer();
   await saveS3(key, thumbnail);
-}
+};
 
 export const handler = async (event) => {
   for (const record of event.Records) {
@@ -40,10 +52,12 @@ export const handler = async (event) => {
     }
 
     if (eventType === 'ObjectRemoved:Delete') {
-      await s3Client.send(new DeleteObjectCommand({
-        Bucket: DEST_BUCKET,
-        Key: key,
-      }));
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: DEST_BUCKET,
+          Key: key,
+        }),
+      );
     }
   }
 
