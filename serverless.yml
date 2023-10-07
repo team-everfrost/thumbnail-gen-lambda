@@ -1,0 +1,44 @@
+service: remak-thumbnailgen
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: ap-northeast-2
+  timeout: 30
+  memorySize: 512
+  environment:
+    NODE_ENV: 'production'
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:DeleteObject
+      Resource:
+        - arn:aws:s3:::remak-documents/*
+        - arn:aws:s3:::remak-thumbnails/*
+  logRetentionInDays: 14
+
+functions:
+  remak-thumbnail-gen:
+    handler: src/handler.handler
+    events:
+      - s3:
+          bucket: remak-documents
+          event: s3:ObjectCreated:*
+      - s3:
+          bucket: remak-documents
+          event: s3:ObjectRemoved:*
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-typescript
+  - serverless-prune-plugin
+
+custom:
+  prune:
+    automatic: true
+    number: 10
