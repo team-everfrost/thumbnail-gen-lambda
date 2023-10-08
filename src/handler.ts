@@ -40,6 +40,7 @@ const createThumbnail = async (byteArray) => {
   const originalSize = (await sharp(byteArray).metadata()).width;
 
   const thumbnail = await sharp(byteArray)
+    .rotate()
     .resize(1440 > originalSize ? originalSize : 1440)
     .toFormat('webp')
     .toBuffer();
