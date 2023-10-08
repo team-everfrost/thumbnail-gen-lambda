@@ -29,7 +29,7 @@ const loadS3 = async (key) => {
 const saveS3 = async (key, body) => {
   const command = new PutObjectCommand({
     Bucket: DEST_BUCKET,
-    Key: key + '.webp',
+    Key: key,
     Body: body,
     ContentType: 'image/webp',
   });
