@@ -37,11 +37,16 @@ const saveS3 = async (key, body) => {
 };
 
 const createThumbnail = async (byteArray) => {
-  const originalSize = (await sharp(byteArray).metadata()).width;
+  const originalWidth = (await sharp(byteArray).metadata()).width;
+  const originalHeight = (await sharp(byteArray).metadata()).height;
 
   const thumbnail = await sharp(byteArray)
     .rotate()
-    .resize(1440 > originalSize ? originalSize : 1440)
+    .resize({
+      width: 1440 > originalWidth ? originalWidth : 1440,
+      height: 1440 > originalHeight ? originalHeight : 1440,
+      fit: 'outside',
+    })
     .toFormat('webp')
     .toBuffer();
 
