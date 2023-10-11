@@ -61,6 +61,8 @@ export const handler = async (event) => {
     if (eventType === 'ObjectCreated:Put') {
       const byteArray = await loadS3(key);
 
+      console.log('New file added: ', key);
+
       // check if the file is an image
       const fileType = await import('file-type');
       const fileTypeResult = await fileType.fileTypeFromBuffer(byteArray);
@@ -75,6 +77,8 @@ export const handler = async (event) => {
     }
 
     if (eventType === 'ObjectRemoved:Delete') {
+      console.log('File deleted: ', key);
+
       await s3Client.send(
         new DeleteObjectCommand({
           Bucket: DEST_BUCKET,
