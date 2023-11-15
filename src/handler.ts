@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
 import { fromBuffer } from 'pdf2pic';
+import * as pdfjsLib from 'pdfjs-dist';
 import sharp from 'sharp';
 
 const SOURCE_BUCKET = 'remak-documents';
@@ -38,7 +39,7 @@ const saveS3 = async (key, body) => {
   await s3Client.send(command);
 };
 
-const createThumbnail = async (byteArray) => {
+const imgThumbnail = async (byteArray) => {
   const originalWidth = (await sharp(byteArray).metadata()).width;
   const originalHeight = (await sharp(byteArray).metadata()).height;
 
@@ -60,23 +61,43 @@ const pdfThumbnail = async (byteArray) => {
 
   const buffer = Buffer.from(byteArray);
 
+  const getPdfSize = async (byteArray) => {
+    const pdf = await pdfjsLib.getDocument(byteArray).promise;
+    const page = await pdf.getPage(1); // 첫 번째 페이지 정보를 가져옵니다.
+    const viewport = page.getViewport({ scale: 1 }); // 기본 스케일로 뷰포트를 가져옵니다.
+
+    return {
+      width: viewport.width,
+      height: viewport.height,
+    };
+  };
+
+  const { width, height } = await getPdfSize(byteArray);
+
   const options = {
-    density: 72,
+    density: 200,
     saveFilename: tempFileName,
     savePath: '/tmp',
     format: 'png',
-    width: 1440,
-    height: 1440,
+    width,
+    height,
   };
 
   const storeAsImage = fromBuffer(buffer, options);
   const pageToConvertAsImage = 1;
 
-  const imgBuffer = await storeAsImage(pageToConvertAsImage, {
-    responseType: 'buffer',
+  await storeAsImage(pageToConvertAsImage, {
+    responseType: 'image',
   });
 
-  const thumbnail = await sharp(imgBuffer).toFormat('webp').toBuffer();
+  const thumbnail = await sharp(`/tmp/${tempFileName}.1.png`)
+    .resize({
+      width: 1440 > width ? width : 1440,
+      height: 1440 > height ? height : 1440,
+      fit: 'outside',
+    })
+    .toFormat('webp')
+    .toBuffer();
 
   return thumbnail;
 };
@@ -100,7 +121,7 @@ export const handler = async (event) => {
       console.log('File type: ', fileTypeResult.mime);
 
       if (fileTypeResult.mime.split('/')[0] === 'image') {
-        const thumbnail = await createThumbnail(byteArray);
+        const thumbnail = await imgThumbnail(byteArray);
         await saveS3(key, thumbnail);
       }
       if (fileTypeResult.mime.split('/')[1] === 'pdf') {
