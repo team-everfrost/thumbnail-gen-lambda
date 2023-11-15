@@ -20,6 +20,9 @@ provider:
         - arn:aws:s3:::remak-documents/*
         - arn:aws:s3:::remak-thumbnails/*
   logRetentionInDays: 14
+  layers:
+    - arn:aws:lambda:ap-northeast-2:175033217214:layer:graphicsmagick:2
+    - arn:aws:lambda:ap-northeast-2:764866452798:layer:ghostscript:15
 
 functions:
   remak-thumbnail-gen:

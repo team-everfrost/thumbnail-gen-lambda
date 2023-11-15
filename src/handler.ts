@@ -4,6 +4,8 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { randomBytes } from 'crypto';
+import { fromBuffer } from 'pdf2pic';
 import sharp from 'sharp';
 
 const SOURCE_BUCKET = 'remak-documents';
@@ -53,6 +55,27 @@ const createThumbnail = async (byteArray) => {
   return thumbnail;
 };
 
+const pdfThumbnail = async (byteArray) => {
+  const tempFileName = randomBytes(16).toString('hex');
+
+  const options = {
+    density: 72,
+    saveFilename: tempFileName,
+    savePath: '/tmp',
+    format: 'webp',
+    width: 1440,
+    height: 1440,
+  };
+
+  const storeAsImage = fromBuffer(byteArray, options);
+  const pageToConvertAsImage = 1;
+
+  const convertedImageBuffer = await storeAsImage(pageToConvertAsImage, {
+    responseType: 'buffer',
+  });
+  return convertedImageBuffer;
+};
+
 export const handler = async (event) => {
   for (const record of event.Records) {
     const { key } = record.s3.object;
@@ -67,13 +90,16 @@ export const handler = async (event) => {
       const fileType = await import('file-type');
       const fileTypeResult = await fileType.fileTypeFromBuffer(byteArray);
 
-      if (!fileTypeResult || fileTypeResult.mime.split('/')[0] !== 'image') {
-        continue;
+      if (!fileTypeResult) continue;
+
+      if (fileTypeResult.mime.split('/')[0] === 'image') {
+        const thumbnail = await createThumbnail(byteArray);
+        await saveS3(key, thumbnail);
       }
-
-      const thumbnail = await createThumbnail(byteArray);
-
-      await saveS3(key, thumbnail);
+      if (fileTypeResult.mime.split('/')[1] === 'pdf') {
+        const thumbnail = await pdfThumbnail(byteArray);
+        await saveS3(key, thumbnail);
+      }
     }
 
     if (eventType === 'ObjectRemoved:Delete') {
