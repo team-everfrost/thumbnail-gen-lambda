@@ -58,6 +58,8 @@ const createThumbnail = async (byteArray) => {
 const pdfThumbnail = async (byteArray) => {
   const tempFileName = randomBytes(16).toString('hex');
 
+  const buffer = Buffer.from(byteArray);
+
   const options = {
     density: 72,
     saveFilename: tempFileName,
@@ -67,7 +69,7 @@ const pdfThumbnail = async (byteArray) => {
     height: 1440,
   };
 
-  const storeAsImage = fromBuffer(byteArray, options);
+  const storeAsImage = fromBuffer(buffer, options);
   const pageToConvertAsImage = 1;
 
   const convertedImageBuffer = await storeAsImage(pageToConvertAsImage, {
@@ -91,6 +93,8 @@ export const handler = async (event) => {
       const fileTypeResult = await fileType.fileTypeFromBuffer(byteArray);
 
       if (!fileTypeResult) continue;
+
+      console.log('File type: ', fileTypeResult.mime);
 
       if (fileTypeResult.mime.split('/')[0] === 'image') {
         const thumbnail = await createThumbnail(byteArray);
