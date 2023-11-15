@@ -64,7 +64,7 @@ const pdfThumbnail = async (byteArray) => {
     density: 72,
     saveFilename: tempFileName,
     savePath: '/tmp',
-    format: 'webp',
+    format: 'png',
     width: 1440,
     height: 1440,
   };
@@ -72,9 +72,11 @@ const pdfThumbnail = async (byteArray) => {
   const storeAsImage = fromBuffer(buffer, options);
   const pageToConvertAsImage = 1;
 
-  await storeAsImage(pageToConvertAsImage);
+  const imgBuffer = await storeAsImage(pageToConvertAsImage, {
+    responseType: 'buffer',
+  });
 
-  const thumbnail = await sharp(`/tmp/${tempFileName}.webp`).toBuffer();
+  const thumbnail = await sharp(imgBuffer).toFormat('webp').toBuffer();
 
   return thumbnail;
 };
