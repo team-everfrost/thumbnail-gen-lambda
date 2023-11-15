@@ -5,7 +5,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
-import fs from 'fs';
 import { fromBuffer } from 'pdf2pic';
 import sharp from 'sharp';
 
@@ -83,18 +82,9 @@ const pdfThumbnail = async (byteArray) => {
   };
 
   const convert = fromBuffer(buffer, options);
-  const pageToConvertAsImage = 1;
+  const pageImg = await convert(1, { responseType: 'buffer' });
 
-  convert(pageToConvertAsImage, { responseType: 'image' }).then((resolve) => {
-    console.log('Page 1 is now converted as image');
-    return resolve;
-  });
-
-  if (!fs.existsSync(`/tmp/${tempFileName}.1.png`)) {
-    throw new Error('Image file not found');
-  }
-
-  const thumbnail = await sharp(`/tmp/${tempFileName}.1.png`)
+  const thumbnail = await sharp(pageImg.buffer)
     .resize({
       width: 1440 > width ? width : 1440,
       height: 1440 > height ? height : 1440,
