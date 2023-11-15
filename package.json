@@ -13,7 +13,6 @@
     "@aws-sdk/client-s3": "^3.427.0",
     "file-type": "^18.5.0",
     "pdf2pic": "^3.0.3",
-    "pdfjs-dist": "^4.0.189",
     "sharp": "^0.32.6"
   },
   "devDependencies": {

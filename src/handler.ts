@@ -6,7 +6,6 @@ import {
 } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
 import { fromBuffer } from 'pdf2pic';
-import * as pdfjsLib from 'pdfjs-dist';
 import sharp from 'sharp';
 
 const SOURCE_BUCKET = 'remak-documents';
@@ -61,18 +60,17 @@ const pdfThumbnail = async (byteArray) => {
 
   const buffer = Buffer.from(byteArray);
 
-  const getPdfSize = async (byteArray) => {
-    const pdf = await pdfjsLib.getDocument(byteArray).promise;
-    const page = await pdf.getPage(1); // 첫 번째 페이지 정보를 가져옵니다.
-    const viewport = page.getViewport({ scale: 1 }); // 기본 스케일로 뷰포트를 가져옵니다.
+  const { default: pdfjs } = await import(
+    'pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js'
+  );
+  const { getDocument } = pdfjs;
 
-    return {
-      width: viewport.width,
-      height: viewport.height,
-    };
-  };
+  const pdf = await getDocument(byteArray).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale: 1.0 });
 
-  const { width, height } = await getPdfSize(byteArray);
+  const width = viewport.width;
+  const height = viewport.height;
 
   const options = {
     density: 200,
