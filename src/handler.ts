@@ -62,7 +62,7 @@ const pdfThumbnail = async (byteArray) => {
 
   const options = {
     density: 72,
-    saveFilename: tempFileName + '.webp',
+    saveFilename: tempFileName,
     savePath: '/tmp',
     format: 'webp',
     width: 1440,
